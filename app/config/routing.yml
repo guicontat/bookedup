@@ -1,0 +1,4 @@
+bu_platform:
+    resource: "@BUPlatformBundle/Resources/config/routing.yml"
+    prefix:   /
+
