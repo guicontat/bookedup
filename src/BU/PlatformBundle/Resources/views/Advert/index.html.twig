@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>BookedUp</title>
+
+		{% stylesheets '@BUPlatformBundle/Resources/public/css/body.css' %}
+   			<link rel="stylesheet" href="{{ asset_url }}" type="text/css"/>
+		{% endstylesheets %}
+		
+		{% javascripts 
+			'@BUPlatformBundle/Resources/public/scripts/main.js'
+		%}
+			<script src = "{{ asset_url }}"></script>
+		{% endjavascripts %}
+
+
+		<script src="{{ asset('http://localhost:8080/socket.io/socket.io.js') }}"></script>
+		<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+
+	</head>
+	<body>
+
+		<h1>Bienvenue sur BOOKED UP !</h1>
+
+		<p>
+			Booked up est un site pour tester le stream audio via le protocol RTP & RTCP fait par {{ nom }}
+		</p>
+
+		<div id="divenablesound">
+  			<button id="enablesoundbut" class="button"> {{ activate }}</button>
+  			<button id="disablesoundbut" class="button"> {{ desactivate }} </button>
+  		</div>
+
+
+  		<div id="divstartstream">
+  			<button id="startstreambut" class="button"> {{ start_stream }} </button>
+  			<button id="stopstreambut" class="button"> {{ stop_stream }} </button>
+  		</div>
+
+  		<div id="playpause">
+  			<button id="play" class="button"> {{ play }} </button>
+  			<button id="stop" class="button"> {{ stop }} </button>
+  		</div>
+
+  		
+
+  		<div id="soundplayer">
+  			<audio id="audio1" src = "{{ asset('bundles/buplatform/sounds/soundstream.wav') }}" >	</audio>
+  		</div>
+  		
+
+	</body>
+</html>
