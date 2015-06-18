@@ -42,26 +42,26 @@ function addListeners(){
 
     FastBase64.Init();
 
-    var RIFFWAVE = function(data, chunkSize, sampleRate) {
+    var RIFFWAVE = function(data, chunkSize, subChunk1Size, audioFormat, numChannels, sampleRate, byteRate, blockAlign, bitsPerSample, subChunk2Size) {
 
         this.data = [];        // Array containing audio samples
         this.wav = [];         // Array containing the generated wave file
         this.dataURI = '';     // http://en.wikipedia.org/wiki/Data_URI_scheme
 
-        this.header = {                         // OFFS SIZE NOTES
-            chunkId      : [0x52,0x49,0x46,0x46], // 0    4    "RIFF" = 0x52494646
-            chunkSize    : 0,                 // 4    4    36+SubChunk2Size = 4+(8+SubChunk1Size)+(8+SubChunk2Size)
-            format       : [0x57,0x41,0x56,0x45], // 8    4    "WAVE" = 0x57415645
-            subChunk1Id  : [0x66,0x6d,0x74,0x20], // 12   4    "fmt " = 0x666d7420
-            subChunk1Size: 16,                    // 16   4    16 for PCM
-            audioFormat  : 1,                     // 20   2    PCM = 1
-            numChannels  : 2,                     // 22   2    Mono = 1, Stereo = 2...
+        this.header = {                                 // OFFS SIZE NOTES
+            chunkId      : [0x52,0x49,0x46,0x46],       // 0    4    "RIFF" = 0x52494646
+            chunkSize    : chunkSize,                   // 4    4    36+SubChunk2Size = 4+(8+SubChunk1Size)+(8+SubChunk2Size)
+            format       : [0x57,0x41,0x56,0x45],       // 8    4    "WAVE" = 0x57415645
+            subChunk1Id  : [0x66,0x6d,0x74,0x20],       // 12   4    "fmt " = 0x666d7420
+            subChunk1Size: subChunk1Size,               // 16   4    16 for PCM
+            audioFormat  : audioFormat,                 // 20   2    PCM = 1
+            numChannels  : numChannels,                 // 22   2    Mono = 1, Stereo = 2...
             sampleRate   : sampleRate,                  // 24   4    8000, 44100...
-            byteRate     : 88200,                  // 28   4    SampleRate*NumChannels*BitsPerSample/8
-            blockAlign   : 2,                     // 32   2    NumChannels*BitsPerSample/8
-            bitsPerSample: 8,                     // 34   2    8 bits = 8, 16 bits = 16
-            subChunk2Id  : [0x64,0x61,0x74,0x61], // 36   4    "data" = 0x64617461
-            subChunk2Size: 0                      // 40   4    data size = NumSamples*NumChannels*BitsPerSample/8
+            byteRate     : byteRate,                    // 28   4    SampleRate*NumChannels*BitsPerSample/8
+            blockAlign   : blockAlign,                  // 32   2    NumChannels*BitsPerSample/8
+            bitsPerSample: bitsPerSample,               // 34   2    8 bits = 8, 16 bits = 16
+            subChunk2Id  : [0x64,0x61,0x74,0x61],       // 36   4    "data" = 0x64617461
+            subChunk2Size: subChunk2Size                // 40   4    data size = NumSamples*NumChannels*BitsPerSample/8
         };
 
         
@@ -121,11 +121,13 @@ function addListeners(){
     document.getElementById('stopstreambut').addEventListener("click", stopstream);
     document.getElementById('play').addEventListener("click", play);
     document.getElementById('stop').addEventListener("click", stop);
+    
     var player = document.querySelector('#audio1');
+    var audio = new Audio();
 
    
     function enablesound(){
-        play('../bundles/buplatform/sounds/soundstream.wav').autoplay().volume(0.3);
+        
     }
 
     function disablesound(){
@@ -133,18 +135,46 @@ function addListeners(){
 
     function startstream(){
         var socket = io.connect('http://localhost:8080');
-        var clientbuffer = [];
-        socket.on('envoiduson', function (buffer, chunkSize, sampleRate) {
+        socket.on('envoiduson', function (buffer, 
+        chunkSize, 
+        subChunk1Size, 
+        audioFormat, 
+        numChannels, 
+        sampleRate, 
+        byteRate, 
+        blockAlign, 
+        bitsPerSample,
+        subChunk2Size) {
 
-            var wave = new RIFFWAVE(buffer.data, chunkSize, sampleRate); // create the wave file
-            var audio = new Audio(wave.dataURI); // create the HTML5 audio element
-            audio.play(); // some noise*/
-            
+            // create the wave file
+            var wave = new RIFFWAVE(buffer.data, 
+                chunkSize, 
+                subChunk1Size, 
+                audioFormat, 
+                numChannels, 
+                sampleRate, 
+                byteRate, 
+                blockAlign, 
+                bitsPerSample,
+                subChunk2Size
+            ); 
+            console.log(chunkSize);
+            console.log(subChunk1Size);
+            console.log(audioFormat);
+            console.log(numChannels);
+            console.log(sampleRate);
+            console.log(byteRate);
+            console.log(blockAlign);
+            console.log(bitsPerSample);
+            console.log(subChunk2Size);
+
+            audio = new Audio(wave.dataURI); // create the HTML5 audio element
+            audio.play(); // some noise*/     
         });
     }
 
     function stopstream(){
-        
+        audio.pause();
     }
 
     function play() {
