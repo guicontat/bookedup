@@ -1,3 +1,6 @@
+
+
+
 function addListeners(){
 
     var FastBase64 = {
@@ -123,9 +126,8 @@ function addListeners(){
     document.getElementById('stop').addEventListener("click", stop);
     
     var player = document.querySelector('#audio1');
-    var audio = new Audio();
-
-   
+    var socket = io.connect('http://localhost:8080');
+ 
     function enablesound(){
         
     }
@@ -134,8 +136,8 @@ function addListeners(){
     }
 
     function startstream(){
-        var socket = io.connect('http://localhost:8080');
-        socket.on('envoiduson', function (buffer, 
+        socket.emit('envoiduson', 'envoiduson');
+        socket.on('getsound', function (buffer, 
         chunkSize, 
         subChunk1Size, 
         audioFormat, 
@@ -158,23 +160,42 @@ function addListeners(){
                 bitsPerSample,
                 subChunk2Size
             ); 
-            console.log(chunkSize);
-            console.log(subChunk1Size);
-            console.log(audioFormat);
-            console.log(numChannels);
-            console.log(sampleRate);
-            console.log(byteRate);
-            console.log(blockAlign);
-            console.log(bitsPerSample);
-            console.log(subChunk2Size);
-
-            audio = new Audio(wave.dataURI); // create the HTML5 audio element
-            audio.play(); // some noise*/     
+            
+            var audio = new Audio(wave.dataURI); // create the HTML5 audio element
+            audio.play();
         });
     }
 
     function stopstream(){
-        audio.pause();
+        socket.emit('envoiduson', 'envoiduson2');
+        socket.on('getsound2', function (buffer, 
+        chunkSize, 
+        subChunk1Size, 
+        audioFormat, 
+        numChannels, 
+        sampleRate, 
+        byteRate, 
+        blockAlign, 
+        bitsPerSample,
+        subChunk2Size) {
+
+            // create the wave file
+            var wave = new RIFFWAVE(buffer.data, 
+                chunkSize, 
+                subChunk1Size, 
+                audioFormat, 
+                numChannels, 
+                sampleRate, 
+                byteRate, 
+                blockAlign, 
+                bitsPerSample,
+                subChunk2Size
+            ); 
+            
+            var audio = new Audio(wave.dataURI); // create the HTML5 audio element
+            audio.play();
+        });
+        
     }
 
     function play() {
