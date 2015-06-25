@@ -1,6 +1,3 @@
-
-
-
 function addListeners(){
 
     var FastBase64 = {
@@ -116,6 +113,26 @@ function addListeners(){
 
     }; // end RIFFWAVE
 
+    function writeString(view, offset, string){
+        for (var i = 0; i < string.length; i++){
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    function floatTo16BitPCM(output, offset, input){
+        for (var i = 0; i < input.length; i++, offset+=8){
+            output.setUint8(input[i], offset , true);
+        }
+    }
+
+    function encodeWAV(samples) {
+        var arrayBuffer = new ArrayBuffer(samples.length);
+        var bufferView = new Uint8Array(arrayBuffer);
+        for (i = 0; i < samples.length; i++) {
+            bufferView[i] = samples[i];
+        }
+        return arrayBuffer;
+    }
 
 
     document.getElementById('enablesoundbut').addEventListener("click", enablesound);
@@ -126,10 +143,31 @@ function addListeners(){
     document.getElementById('stop').addEventListener("click", stop);
     
     var player = document.querySelector('#audio1');
-    var socket = io.connect('http://localhost:8080');
- 
+    var socket = io.connect('http://localhost:8080')
+    var audioCtx = new AudioContext();
+    source = audioCtx.createBufferSource();
+    var scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
+    console.log(scriptNode.bufferSize);
+
+
+    scriptNode.onaudioprocess = function(audioProcessingEvent) {
+        var inputBuffer = audioProcessingEvent.inputBuffer;
+        var outputBuffer = audioProcessingEvent.outputBuffer;
+
+        for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
+            var inputData = inputBuffer.getChannelData(channel);
+            var outputData = outputBuffer.getChannelData(channel);
+
+            for (var sample = 0; sample < inputBuffer.length; sample++) {
+               outputData[sample] = inputData[sample];
+            }
+        }
+    }
+
     function enablesound(){
-        
+        source.connect(scriptNode);
+        scriptNode.connect(audioCtx.destination);
+        source.start();
     }
 
     function disablesound(){
@@ -138,64 +176,42 @@ function addListeners(){
     function startstream(){
         socket.emit('envoiduson', 'envoiduson');
         socket.on('getsound', function (buffer, 
-        chunkSize, 
-        subChunk1Size, 
-        audioFormat, 
-        numChannels, 
-        sampleRate, 
-        byteRate, 
-        blockAlign, 
-        bitsPerSample,
+            chunkSize, 
+            subChunk1Size, 
+            audioFormat, 
+            numChannels, 
+            sampleRate, 
+            byteRate, 
+            blockAlign, 
+            bitsPerSample,
         subChunk2Size) {
-
-            // create the wave file
-            var wave = new RIFFWAVE(buffer.data, 
-                chunkSize, 
-                subChunk1Size, 
-                audioFormat, 
-                numChannels, 
-                sampleRate, 
-                byteRate, 
-                blockAlign, 
-                bitsPerSample,
-                subChunk2Size
-            ); 
-            
-            var audio = new Audio(wave.dataURI); // create the HTML5 audio element
-            audio.play();
+            dataview = encodeWAV(buffer.data)  
+            audioCtx.decodeAudioData(dataview, function(buffer) {
+                myBuffer = buffer;   
+                source.buffer = myBuffer;
+            });
+            console.log(source);
         });
     }
 
     function stopstream(){
         socket.emit('envoiduson', 'envoiduson2');
         socket.on('getsound2', function (buffer, 
-        chunkSize, 
-        subChunk1Size, 
-        audioFormat, 
-        numChannels, 
-        sampleRate, 
-        byteRate, 
-        blockAlign, 
-        bitsPerSample,
+            chunkSize, 
+            subChunk1Size, 
+            audioFormat, 
+            numChannels, 
+            sampleRate, 
+            byteRate, 
+            blockAlign, 
+            bitsPerSample,
         subChunk2Size) {
-
-            // create the wave file
-            var wave = new RIFFWAVE(buffer.data, 
-                chunkSize, 
-                subChunk1Size, 
-                audioFormat, 
-                numChannels, 
-                sampleRate, 
-                byteRate, 
-                blockAlign, 
-                bitsPerSample,
-                subChunk2Size
-            ); 
-            
-            var audio = new Audio(wave.dataURI); // create the HTML5 audio element
-            audio.play();
+            dataview = encodeWAV(buffer.data)  
+            audioCtx.decodeAudioData(dataview, function(buffer) {
+                myBuffer = buffer;   
+                source.buffer = myBuffer;
+            });
         });
-        
     }
 
     function play() {
@@ -206,5 +222,7 @@ function addListeners(){
         player.pause();
         player.currentTime = 0;
     }
+
+   
 }
 window.onload = addListeners;

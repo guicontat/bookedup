@@ -13,7 +13,7 @@ var readsound 		= [];
 var io 				= require('socket.io').listen(server );
 var filename 		= 'soundstream3.wav';
 var dirname 		= __dirname + '/' + filename;
-var filename2 		= 'soundstream.wav';
+var filename2 		= 'soundstream3.wav';
 var dirname2 		= __dirname + '/' + filename2;
 
 
