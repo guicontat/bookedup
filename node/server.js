@@ -23,7 +23,7 @@ io.sockets.on('connection', function (socket) {
 	socket.on('envoiduson', function (phrase){
 		if(phrase === 'envoiduson')
 		{
-			wav.openwav(dirname2, function (error, response) {
+			wav.openEntireWav(dirname2, function (error, response) {
 				socket.emit('getsound', 
 					response[0], 
 					response[1], 
@@ -40,7 +40,7 @@ io.sockets.on('connection', function (socket) {
 		}
 		if(phrase === 'envoiduson2')
 		{
-			wav.openwav(dirname, function (error, response) {
+			wav.openEntireWav(dirname, function (error, response) {
 				socket.emit('getsound2', 
 					response[0], 
 					response[1], 

@@ -131,7 +131,18 @@ function addListeners(){
         for (i = 0; i < samples.length; i++) {
             bufferView[i] = samples[i];
         }
-        return arrayBuffer;
+        //console.log(bufferView)
+        return bufferView;
+    }
+
+    function encodeArrayBuffer_Float32(samples) {
+        var bufferView = new Uint8Array(samples);
+        var float32 = new Float32Array(samples.byteLength/2);
+        var j = 0;
+        for (i = 0; i < bufferView.byteLength; i++) {
+            float32[i] = bufferView[i*2]/255*2-1;
+        }
+        return float32;
     }
 
 
@@ -142,32 +153,136 @@ function addListeners(){
     document.getElementById('play').addEventListener("click", play);
     document.getElementById('stop').addEventListener("click", stop);
     
+    audioContext =  new AudioContext();
+
     var player = document.querySelector('#audio1');
     var socket = io.connect('http://localhost:8080')
-    var audioCtx = new AudioContext();
-    source = audioCtx.createBufferSource();
-    var scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
-    console.log(scriptNode.bufferSize);
+    , userMediaInput
+    , recorder
+    , file_io_buffer_size = 65536 * 2
+    console.log("sample rate : ", audioContext.sampleRate)
+    //  Opus Quality Settings
+    //  =====================
+    //  App: 2048=voip, 2049=audio, 2051=low-delay
+    //  Rate: 8000, 12000, 16000, 24000, or 48000
+    //  Frame Duraction: 2.5, 5, 10, 20, 40, 60
+    
+    // Lowest Quality Settings: (Stutters at the start of the playback)
+    // , sampler = new SpeexResampler(1, 8000*2, 8000, 16, false)
+    // , encoder = new OpusEncoder(8000, 1, 2048, 2.5) 
+    // , decoder = new OpusDecoder(8000, 1)
+
+    // Highest Quality Settings:
+    , sampler = new SpeexResampler(2, 44100, 44100, 16, false)
+    , encoder = new OpusEncoder(48000, 2, 2049, 60) 
+    , decoder = new OpusDecoder(48000, 2)
+    
+    // Medium Quality Settings:
+    //, sampler = new SpeexResampler(1, 24000*2, 24000, 16, false)
+    //, encoder = new OpusEncoder(24000, 1, 2048, 20) 
+    //, decoder = new OpusDecoder(24000, 1)    
+    ;
 
 
-    scriptNode.onaudioprocess = function(audioProcessingEvent) {
-        var inputBuffer = audioProcessingEvent.inputBuffer;
-        var outputBuffer = audioProcessingEvent.outputBuffer;
 
-        for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-            var inputData = inputBuffer.getChannelData(channel);
-            var outputData = outputBuffer.getChannelData(channel);
+    //// WAVE READER
+    //////////////////////////////////////////////////////////////////////////
 
-            for (var sample = 0; sample < inputBuffer.length; sample++) {
-               outputData[sample] = inputData[sample];
-            }
-        }
+    var wavReader = null;
+
+    function initWavReader(){
+        wavReader = new RiffPcmWaveReader();
+        wavReader.onopened = wavReaderOpened;
+        wavReader.onloadend = wavReaderLoadend;
+        wavReader.onerror = wavReaderError;
     }
 
+    function wavReaderOpened(){
+        var rate = wavReader.getSamplingRate()
+        , bitsPerSample = wavReader.getBitsPerSample()
+        , channels = wavReader.getChannels()
+        , chunkBytes = wavReader.getDataChunkBytes()
+        , seconds = (chunkBytes / (rate * channels * (bitsPerSample/8))).toFixed(2)
+        ;
+        console.log('sample rate : ' + rate + ' BitsPerSample : ' + bitsPerSample +  ' Channels : ' + channels + ' ChunkBytes : ' + chunkBytes);
+        wavReader.seek(0);
+        wavReader.read(file_io_buffer_size);
+    }
+
+    function wavReaderLoadend(ev){
+        console.log('WaveReader read '+ ev.target.result.byteLength+' bytes.');
+        doEncodeDecode(ev.target.result);
+        // Read while there's still bytes!
+        if(ev.target.result.byteLength>0)
+        wavReader.read(file_io_buffer_size);
+    }
+
+    function wavReaderError(reason){
+        console.log('wavReader error: ', reason);
+    }
+
+
+
+    //// OPUS ENCODE/DECODE > TO AUDIO QUEUE
+    //////////////////////////////////////////////////////////////////////////
+
+    function doEncodeDecode(data){
+        var resampled_pcm = encodeArrayBuffer_Float32(data)
+        audioQueue.write(resampled_pcm);
+    }
+
+
+
+    //// AUDIO QUEUE
+    //////////////////////////////////////////////////////////////////////////
+
+    var audioQueue = {
+        buffer: new Float32Array(0),
+
+        write: function(newAudio){
+            var currentQLength = this.buffer.length
+            , newBuffer = new Float32Array(currentQLength+newAudio.length)
+        ;
+        //console.log('coucou');
+        newBuffer.set(this.buffer, 0);
+        newBuffer.set(newAudio, currentQLength);
+        this.buffer = newBuffer;
+        //console.log('Queued '+newBuffer.length+' samples.');
+        },
+
+        read: function(nSamples){
+            var samplesToPlay = this.buffer.subarray(0, nSamples);
+            this.buffer = this.buffer.subarray(nSamples, this.buffer.length);
+            //console.log('Queue at '+this.buffer.length+' samples.');
+            return samplesToPlay;
+        },
+
+        length: function(){
+            return this.buffer.length;
+        }
+    };
+
+
+
+    
+  //// JAVASCRIPT AUDIO NOTE (FOR OUTPUT SOUND)
+  //////////////////////////////////////////////////////////////////////////
+
+  var scriptNode = audioContext.createScriptProcessor(1024, 1, 1)
+    , silence = new Float32Array(1024)
+    ;
+
+  scriptNode.onaudioprocess = function(e) {
+    if (audioQueue.length())
+        e.outputBuffer.getChannelData(0).set(audioQueue.read(1024));
+    else
+      e.outputBuffer.getChannelData(0).set(silence);
+  }
+
+  scriptNode.connect(audioContext.destination);
+
     function enablesound(){
-        source.connect(scriptNode);
-        scriptNode.connect(audioCtx.destination);
-        source.start();
+       
     }
 
     function disablesound(){
@@ -185,33 +300,14 @@ function addListeners(){
             blockAlign, 
             bitsPerSample,
         subChunk2Size) {
-            dataview = encodeWAV(buffer.data)  
-            audioCtx.decodeAudioData(dataview, function(buffer) {
-                myBuffer = buffer;   
-                source.buffer = myBuffer;
-            });
-            console.log(source);
+            initWavReader();
+           blob = new Blob([encodeWAV(buffer.data)], {type: "audio/wav"})
+           wavReader.open(blob);
         });
     }
 
     function stopstream(){
-        socket.emit('envoiduson', 'envoiduson2');
-        socket.on('getsound2', function (buffer, 
-            chunkSize, 
-            subChunk1Size, 
-            audioFormat, 
-            numChannels, 
-            sampleRate, 
-            byteRate, 
-            blockAlign, 
-            bitsPerSample,
-        subChunk2Size) {
-            dataview = encodeWAV(buffer.data)  
-            audioCtx.decodeAudioData(dataview, function(buffer) {
-                myBuffer = buffer;   
-                source.buffer = myBuffer;
-            });
-        });
+    
     }
 
     function play() {
