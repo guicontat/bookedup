@@ -11,50 +11,33 @@ var server = http.createServer(function(req, res) {
 });
 var readsound 		= [];
 var io 				= require('socket.io').listen(server );
-var filename 		= 'soundstream3.wav';
+var filename 		= 'soundstream.wav';
 var dirname 		= __dirname + '/' + filename;
 var filename2 		= 'soundstream3.wav';
 var dirname2 		= __dirname + '/' + filename2;
-
-
+var pos_end = 4140;
+var pos_start = 44;
+var nb_frame = 1;
 
 
 io.sockets.on('connection', function (socket) {
 	socket.on('envoiduson', function (phrase){
 		if(phrase === 'envoiduson')
 		{
-			wav.openEntireWav(dirname2, function (error, response) {
-				socket.emit('getsound', 
-					response[0], 
-					response[1], 
-					response[2], 
-					response[3], 
-					response[4], 
-					response[5], 
-					response[6], 
-					response[7], 
-					response[8],
-					response[9]
-				);	
+			wav.getData(dirname,0, pos_start, pos_end, function (error, response) {
+				socket.emit('getsound', response[0], response[1], nb_frame);	
+				pos_end+=4096;
+				pos_start+=4096;
+				nb_frame++;
 			});
 		}
-		if(phrase === 'envoiduson2')
+		if(phrase === 'restartstream')
 		{
-			wav.openEntireWav(dirname, function (error, response) {
-				socket.emit('getsound2', 
-					response[0], 
-					response[1], 
-					response[2], 
-					response[3], 
-					response[4], 
-					response[5], 
-					response[6], 
-					response[7], 
-					response[8],
-					response[9]
-				);	
-			});
+			pos_end=4140;
+			pos_start=44;
+			nb_frame=1;
 		}
+
 	});
 	
 });

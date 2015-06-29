@@ -1,3 +1,21 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var window = require('global/window');
+
+var Context = window.AudioContext || window.webkitAudioContext;
+if (Context) module.exports = new Context;
+
+},{"global/window":2}],2:[function(require,module,exports){
+(function (global){
+if (typeof window !== "undefined") {
+    module.exports = window;
+} else if (typeof global !== "undefined") {
+    module.exports = global;
+} else {
+    module.exports = {};
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],3:[function(require,module,exports){
 function addListeners(){
 
     var FastBase64 = {
@@ -113,82 +131,6 @@ function addListeners(){
 
     }; // end RIFFWAVE
 
-    function writeString(view, offset, string){
-        for (var i = 0; i < string.length; i++){
-            view.setUint8(offset + i, string.charCodeAt(i));
-        }
-    }
-
-    function floatTo16BitPCM(output, offset, input){
-        for (var i = 0; i < input.length; i++, offset+=8){
-            output.setUint8(input[i], offset , true);
-        }
-    }
-
-    function encodeWAV(samples) {
-        var arrayBuffer = new ArrayBuffer(samples.length);
-        var bufferView = new Uint8Array(arrayBuffer);
-        for (i = 0; i < samples.length; i++) {
-            bufferView[i] = samples[i];
-        }
-        //console.log(bufferView)
-        return bufferView;
-    }
-
-    function encodeArrayBuffer_Float32(samples) {
-        var bufferView = new Uint8Array(samples);
-        var float32 = new Float32Array(samples.byteLength/2);
-        var j = 0;
-        for (i = 0; i < bufferView.byteLength; i++) {
-            float32[i] = bufferView[i*2]/255*2-1;
-        }
-        return float32;
-    }
-
-
-    document.getElementById('enablesoundbut').addEventListener("click", enablesound);
-    document.getElementById('disablesoundbut').addEventListener("click", disablesound);
-    document.getElementById('startstreambut').addEventListener("click", startstream);
-    document.getElementById('stopstreambut').addEventListener("click", stopstream);
-    document.getElementById('play').addEventListener("click", play);
-    document.getElementById('stop').addEventListener("click", stop);
-    
-    audioContext =  new AudioContext();
-
-    var player = document.querySelector('#audio1');
-    var socket = io.connect('http://localhost:8080')
-    , userMediaInput
-    , recorder
-    , file_io_buffer_size = 65536 * 2
-    console.log("sample rate : ", audioContext.sampleRate)
-    //  Opus Quality Settings
-    //  =====================
-    //  App: 2048=voip, 2049=audio, 2051=low-delay
-    //  Rate: 8000, 12000, 16000, 24000, or 48000
-    //  Frame Duraction: 2.5, 5, 10, 20, 40, 60
-    
-    // Lowest Quality Settings: (Stutters at the start of the playback)
-    // , sampler = new SpeexResampler(1, 8000*2, 8000, 16, false)
-    // , encoder = new OpusEncoder(8000, 1, 2048, 2.5) 
-    // , decoder = new OpusDecoder(8000, 1)
-
-    // Highest Quality Settings:
-    , sampler = new SpeexResampler(2, 44100, 44100, 16, false)
-    , encoder = new OpusEncoder(48000, 2, 2049, 60) 
-    , decoder = new OpusDecoder(48000, 2)
-    
-    // Medium Quality Settings:
-    //, sampler = new SpeexResampler(1, 24000*2, 24000, 16, false)
-    //, encoder = new OpusEncoder(24000, 1, 2048, 20) 
-    //, decoder = new OpusDecoder(24000, 1)    
-    ;
-
-
-
-    //// WAVE READER
-    //////////////////////////////////////////////////////////////////////////
-
-    var wavReader = null;
 
     function initWavReader(){
         wavReader = new RiffPcmWaveReader();
@@ -221,20 +163,76 @@ function addListeners(){
         console.log('wavReader error: ', reason);
     }
 
-
-
-    //// OPUS ENCODE/DECODE > TO AUDIO QUEUE
-    //////////////////////////////////////////////////////////////////////////
-
-    function doEncodeDecode(data){
-        var resampled_pcm = encodeArrayBuffer_Float32(data)
-        audioQueue.write(resampled_pcm);
+    function writeString(view, offset, string){
+        for (var i = 0; i < string.length; i++){
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
     }
 
+    function floatTo16BitPCM(output, offset, input){
+        for (var i = 0; i < input.length; i++, offset+=8){
+            output.setUint8(input[i], offset , true);
+        }
+    }
 
+    function returnArray(samples) {
+        var arrayBuffer = new ArrayBuffer(samples.length);
+        var bufferView = new Uint8Array(arrayBuffer);
+        for (i = 0; i < samples.length; i++) {
+            bufferView[i] = samples[i];
+        }
+        //console.log(bufferView)
+        return arrayBuffer;
+    }
 
-    //// AUDIO QUEUE
-    //////////////////////////////////////////////////////////////////////////
+    function returnBlob(samples) {
+        var arrayBuffer = new ArrayBuffer(samples.length);
+        var bufferView = new Uint8Array(arrayBuffer);
+        for (i = 0; i < samples.length; i++) {
+            bufferView[i] = samples[i];
+        }
+        //console.log(bufferView)
+        return bufferView;
+    }
+
+    function encodeArrayBuffer_Float32(samples) {
+        var bufferView = new Uint8Array(samples);
+        var float32 = new Float32Array(samples.byteLength/2);
+        for (i = 0; i < bufferView.byteLength; i++) {
+            float32[i] = bufferView[i*2]/255*2-1;
+        }
+        return float32;
+    }
+
+    function encodeData_Float32(samples) {
+        var float32 = new Float32Array(samples.length/2);
+        for (i = 0; i < samples.length; i++) {
+            float32[i] = samples[i*2]/255*2-1;
+        }
+        return float32;
+    }
+
+    function getFloat(samples, buffer_size)
+    {
+        var float32 = new Float32Array(buffer_size);
+        for (i = 0; i < buffer_size; i++) {
+            float32[i] = samples[i];
+        }
+        return float32;
+    }
+
+    document.getElementById('enablesoundbut').addEventListener("click", enablesound);
+    document.getElementById('disablesoundbut').addEventListener("click", disablesound);
+    document.getElementById('startstreambut').addEventListener("click", startstream);
+    document.getElementById('stopstreambut').addEventListener("click", stopstream);
+    document.getElementById('play').addEventListener("click", play);
+    document.getElementById('stop').addEventListener("click", stop);
+    
+
+    var audioContext = require('audio-context');
+    var player = document.querySelector('#audio1');
+    var socket = io.connect('http://localhost:8080');
+    var cpt1024 = 0;
 
     var audioQueue = {
         buffer: new Float32Array(0),
@@ -242,12 +240,12 @@ function addListeners(){
         write: function(newAudio){
             var currentQLength = this.buffer.length
             , newBuffer = new Float32Array(currentQLength+newAudio.length)
-        ;
-        //console.log('coucou');
-        newBuffer.set(this.buffer, 0);
-        newBuffer.set(newAudio, currentQLength);
-        this.buffer = newBuffer;
-        //console.log('Queued '+newBuffer.length+' samples.');
+            ;
+
+            newBuffer.set(this.buffer, 0);
+            newBuffer.set(newAudio, currentQLength);
+            this.buffer = newBuffer;
+            // console.log('Queued '+newBuffer.length+' samples.');
         },
 
         read: function(nSamples){
@@ -262,25 +260,24 @@ function addListeners(){
         }
     };
 
+    socket.emit('envoiduson', 'restartstream');
 
-
-    
-  //// JAVASCRIPT AUDIO NOTE (FOR OUTPUT SOUND)
-  //////////////////////////////////////////////////////////////////////////
-
-  var scriptNode = audioContext.createScriptProcessor(1024, 1, 1)
-    , silence = new Float32Array(1024)
+    var scriptNode = audioContext.createScriptProcessor(2048, 1, 1)
+    , silence = new Float32Array(2048)
     ;
 
-  scriptNode.onaudioprocess = function(e) {
+    scriptNode.onaudioprocess = function(e) {
     if (audioQueue.length())
-        e.outputBuffer.getChannelData(0).set(audioQueue.read(1024));
+    {
+        e.outputBuffer.getChannelData(0).set(audioQueue.read(2048));
+        socket.emit('envoiduson', 'envoiduson');
+    }
     else
-      e.outputBuffer.getChannelData(0).set(silence);
-  }
+        e.outputBuffer.getChannelData(0).set(silence);
+    }
 
-  scriptNode.connect(audioContext.destination);
-
+    scriptNode.connect(audioContext.destination);
+    
     function enablesound(){
        
     }
@@ -289,25 +286,19 @@ function addListeners(){
     }
 
     function startstream(){
+        var nb_frame_prev = 0;
         socket.emit('envoiduson', 'envoiduson');
-        socket.on('getsound', function (buffer, 
-            chunkSize, 
-            subChunk1Size, 
-            audioFormat, 
-            numChannels, 
-            sampleRate, 
-            byteRate, 
-            blockAlign, 
-            bitsPerSample,
-        subChunk2Size) {
-            initWavReader();
-           blob = new Blob([encodeWAV(buffer.data)], {type: "audio/wav"})
-           wavReader.open(blob);
+        socket.on('getsound', function (buffer, buffer_size, nb_frame) {
+            audioQueue.write(getFloat(buffer ,buffer_size));
+            if(nb_frame == (nb_frame_prev+1))
+            {
+                nb_frame_prev++;
+            }
         });
     }
 
     function stopstream(){
-    
+        socket.emit('envoiduson', 'restartstream');
     }
 
     function play() {
@@ -322,3 +313,4 @@ function addListeners(){
    
 }
 window.onload = addListeners;
+},{"audio-context":1}]},{},[3]);
