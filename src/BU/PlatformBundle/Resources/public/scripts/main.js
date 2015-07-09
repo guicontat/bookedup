@@ -21,14 +21,16 @@ function addListeners(){
     document.getElementById('enablesoundbut').addEventListener("click", enablesound);
     document.getElementById('disablesoundbut').addEventListener("click", disablesound);
 
-    var audioContext = require('audio-context')
-    , socket = io.connect('http://localhost:8080')
-    , player = document.querySelector('#audio1')
-    , scriptNode = audioContext.createScriptProcessor(8192, 1, 1)
-    , silence = new Float32Array(8192)
-    , nb_frame_prev = 0
-    , bool_first_emit = false
-    , audioQueue = {
+    var audioContext        = require('audio-context')
+    , socket                = io.connect('http://localhost:8080')
+    , player                = document.querySelector('#audio1')
+    , frame_size            = 16384
+    , scriptNode            = audioContext.createScriptProcessor(frame_size, 1, 1)
+    , silence               = new Float32Array(frame_size)
+    , nb_frame_prev         = 0
+    , nb_frame_audioprocess = 0
+    , bool_first_emit       = false
+    , audioQueue            = {
         buffer: new Float32Array(0),
 
         write: function(newAudio){
@@ -46,6 +48,7 @@ function addListeners(){
             var samplesToPlay = this.buffer.subarray(0, nSamples);
             this.buffer = this.buffer.subarray(nSamples, this.buffer.length);
             console.log('Queue at '+this.buffer.length+' samples.');
+            audioProcessing();
             return samplesToPlay;
         },
 
@@ -73,48 +76,36 @@ function addListeners(){
         return float32;
     }
 
-    try
-    {
-        scriptNode.onaudioprocess = function(e) {
-            if (audioQueue.length() >= 8192)
-            {
-                
-                e.outputBuffer.getChannelData(0).set(audioQueue.read(8192));
-                audioProcessing();
-            }
-            else
-            {
-                e.outputBuffer.getChannelData(0).set(silence);
-            }
+    scriptNode.onaudioprocess = function(e) {
+        if (audioQueue.length() >= frame_size)
+        {
+            e.outputBuffer.getChannelData(0).set(audioQueue.read(frame_size));
+        }
+        else
+        {   
+            e.outputBuffer.getChannelData(0).set(silence);
         }
     }
-    catch(e)
-    {
-        console.log(e);
-    }
+    
 
     socket.on('getsound', function (buffer, buffer_size, nb_frame) {
         audioQueue.write(getFloat(buffer ,buffer_size));
     });
 
     function enablesound(){
-        if(!bool_first_emit)
-        {
-            socket.emit('envoiduson', 'envoiduson');
-            bool_first_emit = true;
-        }
+        socket.emit('envoiduson', 'envoiduson');
     }
 
     function disablesound(){
-        socket.emit('envoiduson', 'restartstream');
-        bool_first_emit = false;
-        audioQueue.buffer = new Float32Array(0);
+        socket.emit('stopbuffering');
+      
     }
 
     function audioProcessing()
     {
         socket.emit('envoiduson', 'envoiduson');
-        console.log(audioQueue.length());
+        nb_frame_audioprocess++;
+        //console.log(audioQueue.length());
     }
 
 }
