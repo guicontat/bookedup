@@ -2,7 +2,8 @@ var coreAudio               = require("node-core-audio")
 , engine                    = coreAudio.createNewAudioEngine()
 , io                        = require('socket.io-client')
 , frame_size                = 2048
-, start_stream              = false
+, start_stream              = true
+, disconnect                = false
 , socket                    = io.connect('http://localhost:3000')
 , audioQueue                = {
   
@@ -34,19 +35,30 @@ var coreAudio               = require("node-core-audio")
 
 
 function processAudio( inputBuffer ) {  
-    if(start_stream)
-        audioQueue.write(inputBuffer[0])
-    socket.on('sendvoice', function(){
+    if(start_stream) {
+        audioQueue.write(inputBuffer[0]);
+    }
+
+    socket.on('sendVoice', function(){
         start_stream = true;
         console.log("START");
     });
-    socket.on('stopvoice', function(){
+
+    socket.on('stopVoice', function(){
         start_stream = false;
         console.log("STOP");
     });
-    if(audioQueue.length() === frame_size)
-    {
-        socket.emit('getvoice', audioQueue.read(frame_size));
+
+    socket.on('connect_error', function(err){
+        socket.reconnect();
+    });
+
+    socket.on('disconnect', function(){
+         socket = io.connect('http://localhost:3000');
+    });
+
+    if(audioQueue.length() === frame_size) {
+        socket.emit('getVoice', audioQueue.read(frame_size));
     }
     return inputBuffer[0][0];
 }
