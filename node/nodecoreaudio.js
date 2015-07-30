@@ -42,11 +42,6 @@ function processAudio( inputBuffer ) {
         audioQueue.write(inputBuffer[0]);
     }
 
-    if(testLatency) {
-        setInterval();
-        testLatency = false;
-    }
-
     socket.on('sendVoice', function(){
         start_stream = true;
         console.log("START");
@@ -66,6 +61,7 @@ function processAudio( inputBuffer ) {
     });
 
     if(audioQueue.length() === frame_size) {
+        setInterval();
         socket.emit('getVoice', audioQueue.read(frame_size));
     }
     return inputBuffer[0][0];
