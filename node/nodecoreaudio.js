@@ -4,6 +4,7 @@ var coreAudio               = require("node-core-audio")
 , frame_size                = 2048
 , start_stream              = true
 , disconnect                = false
+, testlatency               = true
 , socket                    = io.connect('http://localhost:3000')
 , audioQueue                = {
   
@@ -39,6 +40,11 @@ function processAudio( inputBuffer ) {
         audioQueue.write(inputBuffer[0]);
     }
 
+    if(testLatency) {
+        setInterval();
+        testLatency = false;
+    }
+
     socket.on('sendVoice', function(){
         start_stream = true;
         console.log("START");
@@ -64,3 +70,13 @@ function processAudio( inputBuffer ) {
 }
 
 engine.addAudioCallback( processAudio );
+
+function setInterval(){
+  var startTime = Date.now();
+  socket.emit('ping');
+}
+
+socket.on('pong', function() {
+  latency = Date.now() - startTime;
+  console.log('Temps de latence' : latency);
+});
