@@ -1,13 +1,15 @@
 var coreAudio               = require("node-core-audio")
+, RtpSession                = require("rtp-rtcp").RtpSession
+, RtpPacket                 = require("rtp-rtcp").RtpPacket
 , engine                    = coreAudio.createNewAudioEngine()
-, io                        = require('socket.io-client')
-, frame_size                = 2048
-, start_stream              = true
-, disconnect                = false
+, frame_size                = 16384
+, start_stream              = false
 , testLatency               = true
-, latency                   = undefined
-, startTime                 = undefined
-, socket                    = io.connect('http://localhost:3000')
+, ipaddress                 = "127.0.0.1"
+, port                      = 8000
+, r2                        = new RtpSession(port+1)
+, nb_frame                  = 0
+, disconnect                = false
 , audioQueue                = {
   
     buffer: new Float32Array(0),
@@ -37,40 +39,42 @@ var coreAudio               = require("node-core-audio")
 
 
 
-function processAudio( inputBuffer ) {  
-    if(start_stream) {
-        audioQueue.write(inputBuffer[0]);
-    }
+r2.setRemoteAddress(port,ipaddress);
+ 
+r2.on("error",function(err){
+    console.log(err)
+});
 
-    socket.on('sendVoice', function(){
-        start_stream = true;
-        console.log("START");
-    });
 
-    socket.on('stopVoice', function(){
-        start_stream = false;
-        console.log("STOP");
-    });
-
-    socket.on('connect_error', function(err){
-        socket.reconnect();
-    });
-
-    socket.on('disconnect', function(){
-         socket = io.connect('http://localhost:3000');
-    });
-
-    if(audioQueue.length() === frame_size) {
-        setInterval();
-        socket.emit('getVoice', audioQueue.read(frame_size));
+function processAudio( inputBuffer ) { 
+    if(nb_frame == 0)
+    { 
+        convert(inputBuffer[0], inputBuffer[0].length)
+        nb_frame++;
     }
     return inputBuffer[0][0];
 }
-
 engine.addAudioCallback( processAudio );
 
-function setInterval(){
-  startTime = Date.now();
-  socket.emit('ping', startTime);
-  console.log("PING SEND");
+function convert(inputBuffer, length) {
+    var min = 22;
+    var count = 0;
+    var string = new String();
+    while(count*min<length) {
+        for(var i = 0; i < min;i++)
+        {
+            string+=inputBuffer[i].toString()+',';
+        }
+        r2.sendPayload(new Buffer(string));
+        console.log(count*min + " " + length)
+        string = "";
+        count++;
+    }
+    for(var i= (count-1)*min; i < length; i++){
+        string+=inputBuffer[i].toString()+',';
+        console.log(i)
+    }
+    r2.sendPayload(new Buffer(string));
+    string = "";
+
 }
