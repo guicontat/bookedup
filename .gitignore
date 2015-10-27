@@ -6,6 +6,7 @@
 !app/logs/.gitkeep
 /app/phpunit.xml
 /bin/
+!node_modules/*
 /composer.phar
 /vendor/
 /web/bundles/
