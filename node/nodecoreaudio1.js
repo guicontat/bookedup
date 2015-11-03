@@ -5,7 +5,7 @@ var io                        = require ('socket.io-client');
 var frameSize                 = 1024;
 var start_stream              = false;
 //var socket                    = io.connect('http://localhost:3001', {transports:['websocket']});
-var socket                    = io.connect('http://preprod.live.vpauto.fr:30010', {transports:['websocket','htmlfile','jsonp-polling']});
+var socket                    = io.connect('http://preprod.live.vpauto.fr:4001', {transports:['websocket','htmlfile','jsonp-polling']});
 
 console.log('check 1', socket.socket.connected);
 socket.on('connect', function(){
@@ -35,7 +35,7 @@ socket.on('areYouReady22', function(){
 
 socket.on('disconnect', function(){
     //socket = io.connect('http://localhost:3001');
-    socket = io.connect('http://preprod.live.vpauto.fr:30010', {transports:['websocket','htmlfile','jsonp-polling']});
+    socket = io.connect('http://preprod.live.vpauto.fr:4001', {transports:['websocket','htmlfile','jsonp-polling']});
 });
 
 function processAudio( inputBuffer ) {  

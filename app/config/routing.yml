@@ -1,4 +1,4 @@
-bu_platform:
-    resource: "@BUPlatformBundle/Resources/config/routing.yml"
+blogger_blog:
+    resource: "@BloggerBlogBundle/Resources/config/routing.yml"
     prefix:   /
 
