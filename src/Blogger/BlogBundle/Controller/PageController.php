@@ -14,8 +14,12 @@ class PageController extends Controller
         $em = $this->getDoctrine()
                    ->getEntityManager();
 
-        $blogs = $em->getRepository('BloggerBlogBundle:Blog')
-                    ->getLatestBlogs();
+        $blogs = $em->createQueryBuilder()
+                    ->select('b')
+                    ->from('BloggerBlogBundle:Blog',  'b')
+                    ->addOrderBy('b.created', 'DESC')
+                    ->getQuery()
+                    ->getResult();
 
         return $this->render('BloggerBlogBundle:Page:index.html.twig', array(
             'blogs' => $blogs
@@ -57,5 +61,26 @@ class PageController extends Controller
 	    ));
 	}
 
+	public function sidebarAction()
+	{
+	    $em = $this->getDoctrine()
+	               ->getEntityManager();
+
+	    $tags = $em->getRepository('BloggerBlogBundle:Blog')
+	               ->getTags();
+
+	    $tagWeights = $em->getRepository('BloggerBlogBundle:Blog')
+	                     ->getTagWeights($tags);
+
+	    $commentLimit   = $this->container
+                           ->getParameter('blogger_blog.comments.latest_comment_limit');
+    	$latestComments = $em->getRepository('BloggerBlogBundle:Comment')
+                         ->getLatestComments($commentLimit);
+                
+	    return $this->render('BloggerBlogBundle:Page:sidebar.html.twig', array(
+	        'latestComments'    => $latestComments,
+	        'tags'              => $tagWeights
+	    ));
+	}
 
 }

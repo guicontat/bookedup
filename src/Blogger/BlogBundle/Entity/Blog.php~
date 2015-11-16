@@ -58,7 +58,11 @@ class Blog
      * @ORM\Column(type="datetime")
      */
     protected $updated;
-
+    
+    /**
+     * @ORM\Column(type="string")
+     */
+    protected $slug;
     /**
      * Get id
      *
@@ -237,7 +241,6 @@ class Blog
     * @ORM\PrePersist()
     */
     public function prePersist() {
-        $this->setUpdated(null); // if possible: notice set nullable = true...
         $this->setCreated(new \DateTime());
     }
     /**
@@ -286,5 +289,10 @@ class Blog
     public function getComments()
     {
         return $this->comments;
+    }
+
+    public function __toString()
+    {
+        return $this->getTitle();
     }
 }
