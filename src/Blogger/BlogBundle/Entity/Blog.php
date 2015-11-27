@@ -83,7 +83,7 @@ class Blog
     {
         $this->title = $title;
 
-        return $this;
+        $this->setSlug($this->title);
     }
 
     /**

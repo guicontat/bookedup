@@ -1,64 +1,123 @@
 {
-    "name": "guicontat/blog",
-    "license": "proprietary",
-    "type": "project",
+    "name": "symfony/framework-standard-edition",
+    "description": "The \"Symfony Standard Edition\" distribution",
     "autoload": {
-        "psr-4": {
-            "": "src/",
-            "SymfonyStandard\\": "app/"
-        }
+        "psr-0": { "": "src/", "Context": "features/" }
     },
     "require": {
-        "php": ">=5.3.3",
-        "symfony/symfony": "~2.7@beta",
-        "doctrine/orm": "~2.2,>=2.2.3,<2.5",
-        "doctrine/dbal": "<2.5",
-        "doctrine/doctrine-bundle": "~1.4",
-        "doctrine/doctrine-fixtures-bundle": "dev-master",
-        "doctrine/data-fixtures" : "dev-master",
-        "symfony/assetic-bundle": "~2.3",
-        "symfony/swiftmailer-bundle": "~2.3",
-        "symfony/monolog-bundle": "~2.4",
-        "sensio/distribution-bundle": "~3.0,>=3.0.12",
-        "sensio/framework-extra-bundle": "~3.0,>=3.0.2",
+        "php": ">=5.4.0",
+
+        "symfony/symfony": "2.3.*",
+        "doctrine/orm": ">=2.2.3,<2.4-dev",
+        "doctrine/doctrine-bundle": "1.2.*",
+        "twig/extensions": "1.0.*",
+        "symfony/assetic-bundle": "2.3.*",
+        "symfony/swiftmailer-bundle": "2.3.*",
+        "symfony/monolog-bundle": "2.3.*",
+        "sensio/distribution-bundle": "2.3.*",
+        "sensio/framework-extra-bundle": "2.3.*",
+        "sensio/generator-bundle": "2.3.*",
         "incenteev/composer-parameter-handler": "~2.0",
-        "twig/twig": "~1.0"
-    },
-    "require-dev": {
-        "sensio/generator-bundle": "~2.3"
+
+        "jms/di-extra-bundle": "1.4.*@dev",
+        "jms/security-extra-bundle":            "1.5.*@dev",
+
+        "kriswallsmith/assetic": "1.1.*@dev",
+        "doctrine/doctrine-fixtures-bundle": "2.2.*",
+        "jms/metadata": "*",
+        "knplabs/knp-menu": "v2.0.0-alpha1",
+        "knplabs/knp-menu-bundle": "v2.0.0-alpha1",
+        "knplabs/knp-snappy-bundle": "*",
+        "gedmo/doctrine-extensions": "2.3.*@dev",
+        "stof/doctrine-extensions-bundle": "1.1.*@dev",
+        "besimple/soap-bundle": "dev-master",
+        "besimple/soap-server": "dev-master",
+        "burti/zend-soap": "dev-master",
+        "burti/zend-mime": "dev-master",
+        "friendsofsymfony/user-bundle": "2.0.*@dev",
+        "friendsofsymfony/rest-bundle": "*",
+        "avalanche123/imagine-bundle": "*",
+        "nelmio/api-doc-bundle": "*",
+        "white-october/pagerfanta-bundle": "1.0.*@dev",
+        "wisembly/elephant.io": "~3.0",
+        "knplabs/knp-materialized-path": "dev-master",
+
+        "jms/translation-bundle":            "dev-master",
+        "jms/serializer-bundle":             "dev-master",
+        "jms/i18n-routing-bundle":           "dev-master",
+        "jms/aop-bundle": "1.1.*@dev",
+        "ekino/newrelic-bundle": "1.0.*@dev",
+        "kriswallsmith/buzz": "v0.10",
+        "sensio/buzz-bundle": "dev-master",
+
+        "stfalcon/tinymce-bundle": "dev-master",
+        "besimple/soap-wsdl": "dev-master"
+
+
     },
     "scripts": {
-        "post-root-package-install": [
-            "SymfonyStandard\\Composer::hookRootPackageInstall"
-        ],
         "post-install-cmd": [
             "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::buildBootstrap",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installAssets",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::removeSymfonyStandardFiles",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::prepareDeploymentTarget"
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile"
         ],
         "post-update-cmd": [
             "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::buildBootstrap",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installAssets",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::removeSymfonyStandardFiles",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::prepareDeploymentTarget"
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile"
         ]
     },
+    "require-dev": {
+        "behat/behat":                          "2.4.*@dev",
+        "behat/symfony2-extension":             "*@dev",
+        "behat/mink-extension": "*",
+        "behat/mink-browserkit-driver":         "*@stable",
+        "behat/mink-selenium2-driver":          "1.1.*",
+        "phpspec/phpspec": "2.0.*@dev"
+    },
+    "minimum-stability": "dev",
     "config": {
-        "bin-dir": "bin"
+        "bin-dir": "bin",
+        "github-oauth":{
+            "github.com":"f4fa1f1005361676b81fa0f576305579034acd07"
+        }
     },
     "extra": {
         "symfony-app-dir": "app",
         "symfony-web-dir": "web",
-        "symfony-assets-install": "relative",
         "incenteev-parameters": {
             "file": "app/config/parameters.yml"
+        },
+        "branch-alias": {
+            "dev-master": "2.3-dev"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "knplabs/knp-materialized-path",
+                "version": "dev-master",
+                "dist": {
+                    "url": "https://github.com/KnpLabs/materialized-path/zipball/fe18c19abd095f059b55b7ed779b22e574b3bf31",
+                    "type": "zip"
+                },
+                "source": {
+                    "url": "git:\/\/github.com\/KnpLabs\/materialized-path.git",
+                    "type": "git",
+                    "reference": "fe18c19abd095f059b55b7ed779b22e574b3bf31"
+                },
+                "autoload": {
+                    "psr-0": {
+                        "Knp": "src"
+                    }
+                },
+                "target-dir": ""
+            }
+        }
+    ]
 }

@@ -17,7 +17,9 @@
     </header>
     {% for comment in latestComments %}
         {# .. #}
-        <em><time datetime="{{ comment.created|date('c') }}">{{ comment.created|created_ago }}</time></em>
+       <a href="{{ path('BloggerBlogBundle_blog_show', { 'id': comment.blog.id, 'slug': comment.blog.slug }) }}#comment-{{ comment.id }}">
+            {{ comment.blog.title }}
+        </a>
         {# .. #}
     {% endfor %}
 </section>
